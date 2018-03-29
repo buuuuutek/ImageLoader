@@ -35,7 +35,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let newTableView = UITableView(frame:
             CGRect(x: 0, y: barHeight, width: displayWidth, height: displayHeight - barHeight))
         
-        newTableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
+        newTableView.register(TableViewCell.self, forCellReuseIdentifier: "Cell")
         newTableView.dataSource = self
         newTableView.delegate = self
         
@@ -50,9 +50,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func downloadImages() {
+        
         for url in urlPictureArray {
             
-            let index = self.urlPictureArray.index(of: url)!
+            let index = urlPictureArray.index(of: url)!
             
             Alamofire.request(url).responseImage { response in
                 
@@ -65,6 +66,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
         }
     }
+
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
@@ -73,7 +75,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! TableViewCell
 
         if let cachedPicture = self.imageCache[indexPath.row] {
             
@@ -83,15 +85,25 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             cell.imageView?.image = aspectScaledToFillImage
         }
+        
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        
+        cell.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        
+        UIView.animate(withDuration: 0.7) {
+            cell.transform = CGAffineTransform.identity
+        }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
         return self.view.frame.height / 4
     }
-
-    private let urlPictureArray: Array<String> =
+    
+    let urlPictureArray: Array<String> =
         ["http://www.smartwatchpro.ru/wp-content/uploads/2016/10/Apple-AirPods.png",
          "http://mobiltelefon.ru/photo/september15/07/apple_watch_in_use_02.jpg",
          "https://vivalacloud.ru/wp-content/uploads/2017/09/apple-watch.png",
