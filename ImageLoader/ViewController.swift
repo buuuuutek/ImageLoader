@@ -31,6 +31,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         super.viewDidLoad()
         
         addTableViewToViewController()
+        let margins = view.layoutMarginsGuide
+        self.view.trailingAnchor.constraint(equalTo: margins.trailingAnchor, constant: 0).isActive = true
         
         downloadImages()
         
@@ -102,7 +104,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         
         
-        cell.accessoryView = UIImageView(image: aspectScaledToFillImage)
+        cell.imageView?.image = aspectScaledToFillImage
         
         
 
