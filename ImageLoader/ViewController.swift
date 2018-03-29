@@ -12,8 +12,9 @@ import AlamofireImage
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
-    private var imageView = UIImageView()
-    private let myArray: NSArray =
+    private var tableView: UITableView!
+    private let imageCache = AutoPurgingImageCache()
+    private let myArray: Array<String> =
         ["https://s.appleinsider.ru/2017/12/apple-watch.jpg",
          "https://aip-a.akamaihd.net/2013/09/apple-mac-high-resolution-wallpaper-11.png",
          "http://mobiltelefon.ru/photo/september15/07/apple_watch_in_use_02.jpg",
@@ -30,6 +31,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         super.viewDidLoad()
         
         addTableViewToViewController()
+        
+        downloadImages()
+        
     }
     
     func addTableViewToViewController() {
@@ -46,57 +50,63 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         newTableView.dataSource = self
         newTableView.delegate = self
         
+        self.tableView = newTableView
         self.view.addSubview(newTableView)
+    }
+    
+    func downloadImages() {
+        for url in myArray {
+            
+            let index = self.myArray.index(of: url)!
+            
+            
+            Alamofire.request(url).responseImage { response in
+                //debugPrint(response)
+                
+//                print(response.request)
+//                print(response.response)
+//                debugPrint(response.result)
+                
+                if let image = response.result.value {
+                    print(index)
+                    self.imageCache.add(image, withIdentifier: String(describing: index))
+                    print("===============================================================")
+                    print("String(describing: self.myArray.index(of: url)): \(index)")
+                    print(self.imageCache.image(withIdentifier: String(index)))
+                    print("===============================================================")
+                }
+                
+                let indexPath = IndexPath(item: index, section: 0)
+                self.tableView.reloadRows(at: [indexPath], with: .fade)
+            }
+            
+            
+        }
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return 1
+        return myArray.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-
-        Alamofire.request("https://httpbin.org/image/png").responseImage { response in
-            debugPrint(response)
-            
-            print(response.request)
-            print(response.response)
-            debugPrint(response.result)
-            
-            if let image = response.result.value {
-                cell.accessoryView = UIImageView(image: image)
-            }
-        }
+        
+        let size = CGSize(width: cell.frame.width, height: cell.frame.height)
+        
+        let cachedPicture = self.imageCache.image(withIdentifier: String(indexPath.row))
+        print(cachedPicture)
+        
+        let aspectScaledToFillImage = cachedPicture?.af_imageAspectScaled(toFill: size)
+        
+        
+        
+        cell.accessoryView = UIImageView(image: aspectScaledToFillImage)
+        
+        
 
         return cell
-    }
-    
-    func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
-        let size = image.size
-        
-        let widthRatio  = targetSize.width  / size.width
-        let heightRatio = targetSize.height / size.height
-        
-        // Figure out what our orientation is, and use that to form the rectangle
-        var newSize: CGSize
-        if(widthRatio > heightRatio) {
-            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
-        } else {
-            newSize = CGSize(width: size.width * widthRatio,  height: size.height * widthRatio)
-        }
-        
-        // This is the rect that we've calculated out and this is what is actually used below
-        let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
-        
-        // Actually do the resizing to the rect using the ImageContext stuff
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        image.draw(in: rect)
-        let newImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return newImage!
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
