@@ -13,16 +13,11 @@ import AlamofireImage
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
     private var tableView: UITableView!
-    private var imageCache = Dictionary<Int, UIImage>()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         addTableViewToViewController()
-        
-        addConstraints()
-        
-        downloadImages()
     }
     
     func addTableViewToViewController() {
@@ -43,31 +38,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         self.view.addSubview(newTableView)
     }
     
-    func addConstraints() {
-        let margins = view.layoutMarginsGuide
-        
-        self.view.trailingAnchor.constraint(equalTo: margins.trailingAnchor, constant: 0).isActive = true
-    }
-    
-    func downloadImages() {
-        
-        for url in urlPictureArray {
-            
-            let index = urlPictureArray.index(of: url)!
-            
-            Alamofire.request(url).responseImage { response in
-                
-                if let image = response.result.value {
-                    self.imageCache[index] = image
-                    
-                    let indexPath = IndexPath(item: index, section: 0)
-                    self.tableView.reloadRows(at: [indexPath], with: .fade)
-                }
-            }
-        }
-    }
-
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         return urlPictureArray.count
@@ -76,14 +46,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! TableViewCell
-
-        if let cachedPicture = self.imageCache[indexPath.row] {
+        
+        Alamofire.request(urlPictureArray[indexPath.row]).responseImage { response in
             
-            let size = CGSize(width: cell.frame.width, height: cell.frame.height)
-            
-            let aspectScaledToFillImage = cachedPicture.af_imageAspectScaled(toFill: size)
-            
-            cell.imageView?.image = aspectScaledToFillImage
+            if let image = response.result.value {
+                
+                let size = CGSize(width: cell.frame.width, height: cell.frame.height)
+                
+                let aspectScaledToFillImage = image.af_imageAspectScaled(toFill: size)
+                
+                cell.imageView?.image = aspectScaledToFillImage
+            }
         }
         
         return cell
